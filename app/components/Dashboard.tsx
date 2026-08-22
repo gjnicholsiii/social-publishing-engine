@@ -7,6 +7,7 @@ type Content = { id: string; body: string; title?: string; status: string; creat
 type Channel = { id: string; name: string; displayName?: string; service: string };
 
 const platformLabel: Record<string,string> = { threads: 'Threads', linkedin: 'LinkedIn', substack: 'Substack Note' };
+const laneLabel: Record<string,string> = { books: 'Books / Writing', blackvane: 'Blackvane', '2081': '2081' };
 
 export default function Dashboard() {
   const [tab, setTab] = useState<'queue'|'inbox'|'settings'>('queue');
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [map, setMap] = useState<Record<string,string>>({});
   const [capture, setCapture] = useState('');
+  const [lane, setLane] = useState('books');
   const [busy, setBusy] = useState('');
   const [notice, setNotice] = useState('');
 
@@ -29,10 +31,10 @@ export default function Dashboard() {
   async function addCapture() {
     if (!capture.trim()) return;
     setBusy('capture'); setNotice('');
-    const r = await fetch('/api/content',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({body:capture})});
+    const r = await fetch('/api/content',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({body:capture,lane})});
     const j = await r.json(); setBusy('');
     if (!r.ok) return setNotice(j.error || 'Could not save');
-    setCapture(''); setNotice('Saved to inbox.'); refresh();
+    setCapture(''); setNotice(`Saved to ${laneLabel[lane]} source inbox.`); refresh();
   }
 
   async function generateDay() {
@@ -53,7 +55,7 @@ export default function Dashboard() {
     const r = await fetch('/api/publish',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ids})}); const j=await r.json(); setBusy('');
     if (!r.ok) return setNotice(j.error || 'Publish failed');
     const failures=(j.results||[]).filter((x:any)=>x.error).length;
-    setNotice(failures ? `${j.results.length-failures} queued. ${failures} need attention.` : 'Approved. Social posts are queued in Buffer; Substack Notes are ready to copy.'); refresh();
+    setNotice(failures ? `${j.results.length-failures} queued. ${failures} need attention.` : 'Approved. Threads and LinkedIn are queued in Buffer; Substack Notes are ready to copy.'); refresh();
   }
 
   async function loadChannels() {
@@ -77,8 +79,19 @@ export default function Dashboard() {
       <div><strong>{counts.scheduled}</strong><span>scheduled</span></div>
     </section>
 
+    <section className="routingStrip">
+      <span><b>LinkedIn</b> 2081 + Blackvane</span>
+      <span><b>Substack</b> Books / Writing</span>
+      <span><b>Threads</b> Everything</span>
+    </section>
+
     <section className="capture">
-      <textarea value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Drop a thought, paragraph, quote, rough idea, or something worth arguing about…" />
+      <select value={lane} onChange={e=>setLane(e.target.value)} aria-label="Source lane">
+        <option value="books">Books / Writing</option>
+        <option value="blackvane">Blackvane</option>
+        <option value="2081">2081</option>
+      </select>
+      <textarea value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Drop a thought, paragraph, quote, rough idea, passage, update, or something worth arguing about…" />
       <button onClick={addCapture} disabled={busy==='capture'}>{busy==='capture'?'Saving…':'Add to Inbox'}</button>
     </section>
 
@@ -94,16 +107,16 @@ export default function Dashboard() {
       </div>
     </section>}
 
-    {tab==='inbox' && <section><div className="sectionHead"><h2>Source Inbox</h2></div><div className="inboxList">{items.map(i=><article key={i.id}><span className={`dot ${i.status}`}></span><div><p>{i.body}</p><small>{i.status} · {new Date(i.created_at).toLocaleString()}</small></div></article>)}</div></section>}
+    {tab==='inbox' && <section><div className="sectionHead"><h2>Source Inbox</h2></div><div className="inboxList">{items.map(i=><article key={i.id}><span className={`dot ${i.status}`}></span><div><div className="laneTag">{laneLabel[String(i.title || '').toLowerCase()] || 'Legacy / General'}</div><p>{i.body}</p><small>{i.status} · {new Date(i.created_at).toLocaleString()}</small></div></article>)}</div></section>}
 
     {tab==='settings' && <section><div className="sectionHead"><h2>Buffer Channels</h2><button onClick={loadChannels}>{busy==='channels'?'Connecting…':'Load My Channels'}</button></div>
-      <p className="muted">Connect Threads and LinkedIn in Buffer, set <code>BUFFER_API_KEY</code>, then map each platform once here.</p>
-      <div className="settingsGrid">{['threads','linkedin'].map(platform=><label key={platform}><span>{platformLabel[platform]}</span><select value={map[platform]||''} onChange={e=>setMap({...map,[platform]:e.target.value})}><option value="">Choose channel</option>{channels.map(c=><option key={c.id} value={c.id}>{c.displayName||c.name} · {c.service}</option>)}</select></label>)}</div>
+      <p className="muted">Map Threads and LinkedIn once here. Substack Notes remain copy-ready.</p>
+      <div className="settingsGrid">{['threads','linkedin'].map(platform=><label key={platform}><span>{platformLabel[platform]}</span><select value={map[platform]||''} onChange={e=>setMap({...map,[platform]:e.target.value})}><option value="">Choose channel</option>{channels.filter(c=>c.service===platform).map(c=><option key={c.id} value={c.id}>{c.displayName||c.name}</option>)}</select></label>)}</div>
       <button className="primary small" onClick={saveMap}>Save Mapping</button>
-      <div className="substackBox"><b>Substack</b><p>Generated Notes stay in this app as “ready” because Substack does not currently expose supported publishing through its developer API.</p></div>
+      <div className="substackBox"><b>Substack</b><p>Books and writing sources generate Substack Notes here. They stay “ready” for copy because Substack does not currently expose supported publishing through its developer API.</p></div>
     </section>}
 
-    <footer>Capture once. Edit only when something deserves it.</footer>
+    <footer>Capture once. Route it where it belongs.</footer>
   </main>
 }
 
