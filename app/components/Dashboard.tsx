@@ -6,7 +6,7 @@ type Post = { id: string; platform: string; body: string; status: string; schedu
 type Content = { id: string; body: string; title?: string; status: string; created_at: string };
 type Channel = { id: string; name: string; displayName?: string; service: string };
 
-const platformLabel: Record<string,string> = { threads: 'Threads', facebook: 'Facebook', linkedin: 'LinkedIn', substack: 'Substack Note' };
+const platformLabel: Record<string,string> = { threads: 'Threads', linkedin: 'LinkedIn', substack: 'Substack Note' };
 
 export default function Dashboard() {
   const [tab, setTab] = useState<'queue'|'inbox'|'settings'>('queue');
@@ -97,8 +97,8 @@ export default function Dashboard() {
     {tab==='inbox' && <section><div className="sectionHead"><h2>Source Inbox</h2></div><div className="inboxList">{items.map(i=><article key={i.id}><span className={`dot ${i.status}`}></span><div><p>{i.body}</p><small>{i.status} · {new Date(i.created_at).toLocaleString()}</small></div></article>)}</div></section>}
 
     {tab==='settings' && <section><div className="sectionHead"><h2>Buffer Channels</h2><button onClick={loadChannels}>{busy==='channels'?'Connecting…':'Load My Channels'}</button></div>
-      <p className="muted">Connect Facebook, Threads and LinkedIn in Buffer, set <code>BUFFER_API_KEY</code>, then map each platform once here.</p>
-      <div className="settingsGrid">{['threads','facebook','linkedin'].map(platform=><label key={platform}><span>{platformLabel[platform]}</span><select value={map[platform]||''} onChange={e=>setMap({...map,[platform]:e.target.value})}><option value="">Choose channel</option>{channels.map(c=><option key={c.id} value={c.id}>{c.displayName||c.name} · {c.service}</option>)}</select></label>)}</div>
+      <p className="muted">Connect Threads and LinkedIn in Buffer, set <code>BUFFER_API_KEY</code>, then map each platform once here.</p>
+      <div className="settingsGrid">{['threads','linkedin'].map(platform=><label key={platform}><span>{platformLabel[platform]}</span><select value={map[platform]||''} onChange={e=>setMap({...map,[platform]:e.target.value})}><option value="">Choose channel</option>{channels.map(c=><option key={c.id} value={c.id}>{c.displayName||c.name} · {c.service}</option>)}</select></label>)}</div>
       <button className="primary small" onClick={saveMap}>Save Mapping</button>
       <div className="substackBox"><b>Substack</b><p>Generated Notes stay in this app as “ready” because Substack does not currently expose supported publishing through its developer API.</p></div>
     </section>}

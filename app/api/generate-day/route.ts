@@ -20,7 +20,7 @@ export async function POST() {
   const response = await client.responses.create({
     model: process.env.OPENAI_MODEL || 'gpt-5.6',
     instructions: voice,
-    input: `Turn the source material into one day's publishing queue. Return ONLY valid JSON using this exact shape: {"threads":["","",""],"facebook":["",""],"linkedin":[""],"substack":["","",""]}. Threads should be concise and conversational, with three genuinely different angles. Facebook can be more personal and developed. LinkedIn should be an argument with substance, not corporate inspiration. Substack means Substack Notes: writerly, compact, and worth responding to. Do not duplicate wording across platforms. Do not refer to "the source".\n\n${sourceText}`,
+    input: `Turn the source material into one day's publishing queue. Return ONLY valid JSON using this exact shape: {"threads":["","",""],"linkedin":[""],"substack":["","",""]}. Threads should be concise and conversational, with three genuinely different angles. LinkedIn should be an argument with substance, not corporate inspiration. Substack means Substack Notes: writerly, compact, and worth responding to. Do not duplicate wording across platforms. Do not refer to "the source".\n\n${sourceText}`,
   });
 
   let generated: Record<string, string[]>;
@@ -28,7 +28,7 @@ export async function POST() {
   catch { return NextResponse.json({ error: 'The generator returned malformed output. Try again.' }, { status: 502 }); }
 
   const created: any[] = [];
-  for (const platform of ['threads', 'facebook', 'linkedin', 'substack']) {
+  for (const platform of ['threads', 'linkedin', 'substack']) {
     const posts = Array.isArray(generated[platform]) ? generated[platform] : [];
     for (let i = 0; i < Math.min(posts.length, DEFAULT_SLOTS[platform].length); i++) {
       const text = String(posts[i] || '').trim();

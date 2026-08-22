@@ -1,6 +1,5 @@
 export const DEFAULT_SLOTS: Record<string, string[]> = {
   threads: ['08:15', '12:10', '17:40'],
-  facebook: ['09:20', '18:25'],
   linkedin: ['10:05'],
   substack: ['07:45', '13:30', '20:15'],
 };
